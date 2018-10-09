@@ -63,7 +63,6 @@ class RoomViewsTests(APITestCase):
         response = APIClient().get('/api/room/1/')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-    # FAILING
     def test_can_get_individual_room_when_logged_in_as_user(self):
         c = APIClient()
         c.login(username='test_user', password='P^55w0rd1')
@@ -115,16 +114,43 @@ class RoomViewsTests(APITestCase):
         response = APIClient().put('/api/room/1/', {'name': 'test_room_edited', 'availablility': 'true'})
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-    def test_cannot_update_room_when_logged_in_as_user(self):
+    def test_cannot_update_room_name_when_logged_in_as_user(self):
         c = APIClient()
         c.login(username='test_user', password='P^55w0rd1')
-        response = c.put('/api/room/1/', {'name': 'test_room_edited', 'availablility': 'true'})
+        response = c.put('/api/room/1/', {'name': 'test_room_edited'})
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-    def test_can_update_room_when_logged_in_as_admin(self):
+    def test_cannot_update_room_name_and_availability_when_logged_in_as_user(self):
+        c = APIClient()
+        c.login(username='test_user', password='P^55w0rd1')
+        response = c.put('/api/room/1/', {'name': 'test_room_edited', 'available': 'false'})
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_can_update_room_availability_when_logged_in_as_user(self):
+        c = APIClient()
+        c.login(username='test_user', password='P^55w0rd1')
+        response = c.put('/api/room/1/', {'availablility': 'false'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(Room.objects.get().available, False)
+
+    def test_can_update_room_availability_when_logged_in_as_admin(self):
         c = APIClient()
         c.login(username='test_staff', password='P^55w0rd1')
-        response = c.put('/api/room/1/', {'name': 'test_room_edited', 'availablility': 'true'})
+        response = c.put('/api/room/1/', {'availablility': 'false'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(Room.objects.get().available, False)
+
+    def test_can_update_room_availability_when_logged_in_as_admin(self):
+        c = APIClient()
+        c.login(username='test_staff', password='P^55w0rd1')
+        response = c.put('/api/room/1/', {'name': 'test_room_edited'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(Room.objects.get().name, 'test_room_edited')
+
+    def test_can_update_room_availability_and_room_name_when_logged_in_as_admin(self):
+        c = APIClient()
+        c.login(username='test_staff', password='P^55w0rd1')
+        response = c.put('/api/room/1/', {'name': 'test_room_edited', 'availablility': 'false'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(Room.objects.get().name, 'test_room_edited')
 
@@ -247,3 +273,50 @@ class UsageViewTests(APITestCase):
         c.put('/api/room/1/', {'name': 'test_room_edited', 'availablility': 'true'})
         response = c.get('/api/room/usage/?startDate=2000-01-01T00:00:00Z&endDate=2000-03-01T00:00:00Z&roomId=2')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    @freeze_time("2000-02-02")
+    def test_returns_400_when_room_id_is_not_int(self):
+
+        c = APIClient()
+        c.login(username='test_staff', password='P^55w0rd1')
+        c.put('/api/room/1/', {'name': 'test_room_edited', 'availablility': 'true'})
+        response = c.get('/api/room/usage/?startDate=2000-01-01T00:00:00Z&endDate=2000-03-01T00:00:00Z&roomId=123abc')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    @freeze_time("2000-02-02")
+    def test_returns_405_for_usage_post_request(self):
+
+        c = APIClient()
+        c.login(username='test_staff', password='P^55w0rd1')
+        c.put('/api/room/1/', {'name': 'test_room_edited', 'availablility': 'true'})
+        response = c.post('/api/room/usage/?startDate=2000-01-01T00:00:00Z&endDate=2000-03-01T00:00:00Z&roomId=123')
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    @freeze_time("2000-02-02")
+    def test_returns_405_for_usage_put_request(self):
+
+        c = APIClient()
+        c.login(username='test_staff', password='P^55w0rd1')
+        c.put('/api/room/1/', {'name': 'test_room_edited', 'availablility': 'true'})
+        response = c.put('/api/room/usage/?startDate=2000-01-01T00:00:00Z&endDate=2000-03-01T00:00:00Z&roomId=123')
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    @freeze_time("2000-02-02")
+    def test_returns_405_for_usage_delete_request(self):
+
+        c = APIClient()
+        c.login(username='test_staff', password='P^55w0rd1')
+        c.put('/api/room/1/', {'name': 'test_room_edited', 'availablility': 'true'})
+        response = c.delete('/api/room/usage/?startDate=2000-01-01T00:00:00Z&endDate=2000-03-01T00:00:00Z&roomId=123')
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    @freeze_time("2000-02-02")
+    def test_returns_404_when_detail(self):
+
+        c = APIClient()
+        c.login(username='test_staff', password='P^55w0rd1')
+        c.put('/api/room/1/', {'name': 'test_room_edited', 'availablility': 'true'})
+        response = c.delete('/api/room/usage/1/?startDate=2000-01-01T00:00:00Z&endDate=2000-03-01T00:00:00Z&roomId=123')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    """ CHECK THAT DELETES, UPDATES, CREATES CAUSE BAD REQUEST. """
