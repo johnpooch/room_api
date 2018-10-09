@@ -24,6 +24,8 @@ Freezegun was used in order to test the usage feature which relies on time param
 
 ### Suggestions for Future Improvements
 
+The code allowing basic users to change the availability of a room but not change the name is not a very elegant solution. The solution doesn't work in the web browsable API which is frustrating. I would like to improve this by adding permissions to the individual fields of the Room serializer. Alternatively, I could use two separate serializers, BasicRoomSerializer and FullRoomSerializer, and mark 'name' as a read_only field on the BasicRoomSerializer. I tried to implement both of these solutions but couldn't get it to work how I wanted. I would benefit from a greater understanding of serializers and how permissions are handled with Django REST.
+
 I would like to work out how to deploy the containerised version to Heroku. I followed the documentation but ran into problems that I could not work around. A deeper understanding of Docker might be necessary.
 
 Some of the code in the testing script is repetitive. I would like to spend more time refactoring that code.

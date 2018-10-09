@@ -318,5 +318,3 @@ class UsageViewTests(APITestCase):
         c.put('/api/room/1/', {'name': 'test_room_edited', 'availablility': 'true'})
         response = c.delete('/api/room/usage/1/?startDate=2000-01-01T00:00:00Z&endDate=2000-03-01T00:00:00Z&roomId=123')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-
-    """ CHECK THAT DELETES, UPDATES, CREATES CAUSE BAD REQUEST. """
